@@ -39,20 +39,20 @@ public final class Logger {
     }
 
     //System io
-    public void out(String message, Object... args) {
+    public static void out(String message, Object... args) {
         if (args.length > 0)
             message = String.format(message, args);
         System.out.println(getCallStackTrace() + message);
     }
 
-    public void err(String message, Object... args) {
+    public static void err(String message, Object... args) {
         if (args.length > 0)
             message = String.format(message, args);
         System.err.println(getCallStackTrace() + message);
     }
 
 
-    private String getCallStackTrace() {
+    private static String getCallStackTrace() {
         Throwable ex = new Throwable();
         StackTraceElement[] stackElements = ex.getStackTrace();
         StringBuilder builder = new StringBuilder();
