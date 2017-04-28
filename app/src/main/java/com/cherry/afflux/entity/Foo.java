@@ -10,6 +10,11 @@ public class Foo {
 
     private int id;
     private String name;
+    private long time;
+    private byte bt;
+    private float length;
+    private double radius;
+    private boolean flag;
 
     public Foo() {
     }
@@ -18,9 +23,15 @@ public class Foo {
     }
 
     private void method() {
-
+        int i = 2;
+        i++;
     }
 
-    private void method(int j) {
-    }
+//    private int method(int j) {
+//        return 0;
+//    }
+//
+//    private <T> T method(T t) {
+//        return t;
+//    }
 }

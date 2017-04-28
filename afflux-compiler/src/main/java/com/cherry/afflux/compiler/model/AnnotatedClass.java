@@ -1,6 +1,7 @@
 package com.cherry.afflux.compiler.model;
 
 import com.cherry.afflux.compiler.log.Logger;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeName;
 
@@ -29,10 +30,10 @@ public abstract class AnnotatedClass {
     /**
      * 类名
      */
-    TypeElement mClassElement;
-    List<ExecutableElement> mConstructorElementList;
-    List<VariableElement> mFieldElementList;
-    List<ExecutableElement> mMethodElementList;
+    private TypeElement mClassElement;
+    private List<ExecutableElement> mConstructorElementList;
+    private List<VariableElement> mFieldElementList;
+    private List<ExecutableElement> mMethodElementList;
 
     public AnnotatedClass(TypeElement element) {
         mClassElement = element;
@@ -44,6 +45,7 @@ public abstract class AnnotatedClass {
 
     private void init() {
         Logger.err("element %s", mClassElement.getKind());
+        Logger.err("element simple name %s", mClassElement.getSimpleName());
         Logger.err("element enclosing %s", mClassElement.getEnclosingElement());
         Logger.err("element packageName %s", getFullClassName());
         Logger.err("element asType %s", mClassElement.asType());
@@ -67,12 +69,40 @@ public abstract class AnnotatedClass {
         }
     }
 
+    public List<VariableElement> getAllFieldElements() {
+        return mFieldElementList;
+    }
+
+    public List<ExecutableElement> getAllMethodElements() {
+        return mMethodElementList;
+    }
+
+    public List<ExecutableElement> getAllConstructorElements() {
+        return mConstructorElementList;
+    }
+
+    public String getSimpleName() {
+        return mClassElement.getSimpleName().toString();
+    }
+
+    public String getSimpleNameDebug() {
+        return getSimpleName() + "_debug";
+    }
+
+    public TypeName getTypeNameDebug() {
+        return ClassName.get(getPackageName(), getSimpleNameDebug());
+    }
+
     public String getPackageName() {
         return mClassElement.getEnclosingElement().toString();
     }
 
     public String getFullClassName() {
         return mClassElement.getQualifiedName().toString();
+    }
+
+    public TypeName getTypeName() {
+        return TypeName.get(mClassElement.asType());
     }
 
     private void addField(Element element) {
