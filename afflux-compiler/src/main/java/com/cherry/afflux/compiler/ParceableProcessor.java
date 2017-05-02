@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -47,10 +48,9 @@ public class ParceableProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        Set<String> supportedTypes = new LinkedHashSet<>();
-        for (Class<? extends Annotation> annotation : getSupportedAnnotations()) {
-            supportedTypes.add(annotation.getCanonicalName());
-        }
+        Set<String> supportedTypes = getSupportedAnnotations().stream()
+                .map(Class::getCanonicalName)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         return supportedTypes;
     }
 
@@ -72,7 +72,7 @@ public class ParceableProcessor extends AbstractProcessor {
         try {
             for (Element element : roundEnv.getElementsAnnotatedWith(Parcelable.class)) {
                 if (element.getKind() == ElementKind.CLASS) {
-                    AnnotatedClass annotatedClass = new ParcelableClass((TypeElement) element);
+                    AnnotatedClass annotatedClass = new ParcelableClass(mElementUtil, (TypeElement) element);
                     annotatedClass.generateFile().writeTo(mFiler);
                 }
             }

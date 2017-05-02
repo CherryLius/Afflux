@@ -10,4 +10,6 @@ public interface Type {
     ClassName PARCELABLE = ClassName.get("android.os", "Parcelable");
     ClassName PARCEL = ClassName.get("android.os", "Parcel");
     ClassName CREATOR = ClassName.get("android.os", "Parcelable", "Creator");
+    ClassName UNBINDER = ClassName.get("com.cherry.afflux.api", "Unbinder");
+    ClassName VIEW = ClassName.get("android.view", "View");
 }

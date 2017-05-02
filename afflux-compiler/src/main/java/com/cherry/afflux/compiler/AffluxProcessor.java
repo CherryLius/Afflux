@@ -2,12 +2,20 @@ package com.cherry.afflux.compiler;
 
 import com.cherry.afflux.annotation.BindString;
 import com.cherry.afflux.annotation.BindView;
+import com.cherry.afflux.annotation.OnClick;
 import com.cherry.afflux.compiler.log.Logger;
+import com.cherry.afflux.compiler.model.BindingClass;
+import com.cherry.afflux.compiler.model.BindingViewField;
+import com.cherry.afflux.compiler.model.BindingViewMethod;
 import com.google.auto.service.AutoService;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -15,6 +23,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -65,10 +74,9 @@ public class AffluxProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        Set<String> supportedTypes = new LinkedHashSet<>();
-        for (Class<? extends Annotation> annotation : getSupportedAnnotations()) {
-            supportedTypes.add(annotation.getCanonicalName());
-        }
+        Set<String> supportedTypes = getSupportedAnnotations().stream()
+                .map(Class::getCanonicalName)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         return supportedTypes;
     }
 
@@ -77,6 +85,7 @@ public class AffluxProcessor extends AbstractProcessor {
 
         annotations.add(BindView.class);
         annotations.add(BindString.class);
+        annotations.add(OnClick.class);
 
         return annotations;
     }
@@ -89,10 +98,43 @@ public class AffluxProcessor extends AbstractProcessor {
      */
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        if (!roundEnv.processingOver()) {
+            findAndParseTargets(roundEnv);
+        }
         return false;
     }
 
-    private void findAndParseTargets(RoundEnvironment roundEnv){
+    private void findAndParseTargets(RoundEnvironment roundEnv) {
+        Map<String, BindingClass> bindingClassMap = new LinkedHashMap<>();
+        for (Element element : roundEnv.getElementsAnnotatedWith(BindView.class)) {
+            TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
+            BindingClass binding = getBindingClass(bindingClassMap, enclosingElement);
+            BindingViewField field = new BindingViewField(element);
+            binding.addBindingViewField(field);
+        }
+        for (Element element : roundEnv.getElementsAnnotatedWith(OnClick.class)) {
+            TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
+            BindingClass binding = getBindingClass(bindingClassMap, enclosingElement);
+            BindingViewMethod method = new BindingViewMethod(element, OnClick.class);
+            binding.addBindingViewMethod(method);
+        }
+        for (BindingClass binding : bindingClassMap.values()) {
+            try {
+                binding.generateFile().writeTo(mFiler);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
+    private BindingClass getBindingClass(Map<String, BindingClass> map, TypeElement enclosingElement) {
+        String className = enclosingElement.getQualifiedName().toString();
+        Logger.err("qualified: %s simple: %s", enclosingElement.getQualifiedName().toString(), enclosingElement.getSimpleName().toString());
+        BindingClass binding = map.get(className);
+        if (binding == null) {
+            binding = new BindingClass(mElementUtils, enclosingElement);
+            map.put(className, binding);
+        }
+        return binding;
     }
 }

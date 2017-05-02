@@ -24,6 +24,7 @@ import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
+import javax.lang.model.util.Elements;
 
 /**
  * Created by Administrator on 2017/4/27.
@@ -31,13 +32,13 @@ import javax.lang.model.type.TypeVariable;
 
 public class ParcelableClass extends AnnotatedClass {
 
-    public ParcelableClass(TypeElement element) {
-        super(element);
+    public ParcelableClass(Elements elementUtils, TypeElement element) {
+        super(elementUtils, element);
     }
 
     @Override
     public JavaFile generateFile() {
-        TypeSpec.Builder typeSpecBuilder = TypeSpec.classBuilder(getSimpleNameDebug())
+        TypeSpec.Builder typeSpecBuilder = TypeSpec.classBuilder(getClassName() + "_debug")
                 .addSuperinterface(Type.PARCELABLE)
                 .addModifiers(Modifier.PUBLIC)
                 .addMethod(buildConstructorMethod())
@@ -46,12 +47,20 @@ public class ParcelableClass extends AnnotatedClass {
                 .addField(buildCREATORField());
 
         //add original field
-        List<VariableElement> fieldElementList = getAllFieldElements();
-        for (int i = 0; i < fieldElementList.size(); i++) {
-            VariableElement field = fieldElementList.get(i);
-            TypeName fieldType = TypeName.get(field.asType());
-            typeSpecBuilder.addField(fieldType, field.getSimpleName().toString(), field.getModifiers().toArray(new Modifier[]{}));
-        }
+        //java 8
+        getAllFieldElements().stream().forEach(variableElement -> {
+            TypeName fieldType = TypeName.get(variableElement.asType());
+            typeSpecBuilder.addField(fieldType,
+                    variableElement.getSimpleName().toString(),
+                    variableElement.getModifiers().toArray(new Modifier[]{}));
+
+        });
+//        List<VariableElement> fieldElementList = getAllFieldElements();
+//        for (int i = 0; i < fieldElementList.size(); i++) {
+//            VariableElement field = fieldElementList.get(i);
+//            TypeName fieldType = TypeName.get(field.asType());
+//            typeSpecBuilder.addField(fieldType, field.getSimpleName().toString(), field.getModifiers().toArray(new Modifier[]{}));
+//        }
         //add original method
         List<ExecutableElement> methodElementList = getAllMethodElements();
         for (int i = 0; i < methodElementList.size(); i++) {
@@ -222,5 +231,9 @@ public class ParcelableClass extends AnnotatedClass {
                 .addStatement("return new $T[size]", getTypeNameDebug())
                 .returns(ArrayTypeName.of(getTypeNameDebug()));
         return method.build();
+    }
+
+    private TypeName getTypeNameDebug() {
+        return ClassName.get(getPackageName(), getClassName() + "_debug");
     }
 }
