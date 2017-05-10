@@ -2,7 +2,6 @@ package com.cherry.afflux.compiler.model;
 
 import com.cherry.afflux.annotation.internal.ListenerClass;
 import com.cherry.afflux.annotation.internal.ListenerMethod;
-import com.cherry.afflux.compiler.log.Logger;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -17,6 +16,7 @@ import javax.lang.model.element.ExecutableElement;
 
 public class BindingViewMethod {
     private ExecutableElement mExecutableElement;
+    private String mFieldName;
     private ListenerClass mListenerClass;
     private ListenerMethod[] mListenerMethods;
 
@@ -37,7 +37,17 @@ public class BindingViewMethod {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Logger.err("id = %d", mViewId);
-        throw new IllegalStateException("111");
+    }
+
+    public int getViewId() {
+        return mViewId;
+    }
+
+    public String getFieldName() {
+        return mFieldName;
+    }
+
+    public void setFieldName(String fieldName) {
+        mFieldName = fieldName;
     }
 }

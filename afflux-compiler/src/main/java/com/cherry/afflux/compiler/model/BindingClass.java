@@ -2,6 +2,7 @@ package com.cherry.afflux.compiler.model;
 
 import com.cherry.afflux.compiler.common.Method;
 import com.cherry.afflux.compiler.common.Type;
+import com.cherry.afflux.compiler.log.Logger;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -39,6 +40,7 @@ public class BindingClass extends AnnotatedClass {
 
     @Override
     public JavaFile generateFile() {
+        bindFieldMethod();
         TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(getClassName() + "_Binder")
                 .addModifiers(Modifier.PUBLIC)
                 .addSuperinterface(Type.UNBINDER)
@@ -60,6 +62,12 @@ public class BindingClass extends AnnotatedClass {
                     field.getTypeName(),
                     field.getViewId());
         }
+        for (BindingViewMethod method : mBindingMethodLists) {
+            if (method.getFieldName() != null) {
+                //constructor.addStatement("target.$N.$N")
+                Logger.err("name: %s", method.getFieldName());
+            }
+        }
         return constructor.build();
     }
 
@@ -74,5 +82,20 @@ public class BindingClass extends AnnotatedClass {
         }
         method.addStatement("this.target = null");
         return method.build();
+    }
+
+    private void bindFieldMethod() {
+        Logger.err("method list %d", mBindingMethodLists.size());
+        for (BindingViewField field : mBindingFieldLists) {
+            int id = field.getViewId();
+            Logger.err("field id = %d", id);
+            for (BindingViewMethod method : mBindingMethodLists) {
+                Logger.err("method id = %d", method.getViewId());
+                if (id == method.getViewId()) {
+                    method.setFieldName(field.getSimpleName());
+                    break;
+                }
+            }
+        }
     }
 }
