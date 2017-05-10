@@ -64,8 +64,11 @@ public class BindingClass extends AnnotatedClass {
         }
         for (BindingViewMethod method : mBindingMethodLists) {
             if (method.getFieldName() != null) {
-                //constructor.addStatement("target.$N.$N")
-                Logger.err("name: %s", method.getFieldName());
+                TypeSpec listener = method.generateListener();
+                constructor.addStatement("target.$N.$N($L)",
+                        method.getFieldName(),
+                        method.setter(),
+                        listener);
             }
         }
         return constructor.build();
@@ -85,12 +88,9 @@ public class BindingClass extends AnnotatedClass {
     }
 
     private void bindFieldMethod() {
-        Logger.err("method list %d", mBindingMethodLists.size());
         for (BindingViewField field : mBindingFieldLists) {
             int id = field.getViewId();
-            Logger.err("field id = %d", id);
             for (BindingViewMethod method : mBindingMethodLists) {
-                Logger.err("method id = %d", method.getViewId());
                 if (id == method.getViewId()) {
                     method.setFieldName(field.getSimpleName());
                     break;
