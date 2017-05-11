@@ -38,7 +38,8 @@ public class ParceableProcessor extends AbstractProcessor {
         super.init(processingEnv);
         mElementUtil = processingEnv.getElementUtils();
         mFiler = processingEnv.getFiler();
-        mLogger = new Logger(processingEnv.getMessager());
+        mLogger = Logger.instance();
+        mLogger.setMessager(processingEnv.getMessager());
     }
 
     @Override

@@ -9,19 +9,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by Administrator on 2017/5/2.
+ * Created by Administrator on 2017/5/11.
  */
+
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)
 @ListenerClass(
         targetType = "android.view.View",
-        setter = "setOnClickListener",
-        type = "android.view.View.OnClickListener",
+        setter = "setOnLongClickListener",
+        type = "android.view.View.OnLongClickListener",
         method = @ListenerMethod(
-                name = "onClick",
-                parameters = "android.view.View"
+                name = "onLongClick",
+                parameters = "android.view.View",
+                returnType = "boolean",
+                defaultReturn = "false"
         )
 )
-public @interface OnClick {
+public @interface OnLongClick {
     int[] value() default 0;
 }

@@ -17,5 +17,5 @@ public @interface ListenerClass {
 
     String type();
 
-    ListenerMethod[] method() default {};
+    ListenerMethod method();
 }

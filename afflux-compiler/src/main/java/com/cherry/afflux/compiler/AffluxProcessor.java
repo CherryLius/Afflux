@@ -3,6 +3,7 @@ package com.cherry.afflux.compiler;
 import com.cherry.afflux.annotation.BindString;
 import com.cherry.afflux.annotation.BindView;
 import com.cherry.afflux.annotation.OnClick;
+import com.cherry.afflux.annotation.OnLongClick;
 import com.cherry.afflux.compiler.log.Logger;
 import com.cherry.afflux.compiler.model.BindingClass;
 import com.cherry.afflux.compiler.model.BindingViewField;
@@ -11,6 +12,7 @@ import com.google.auto.service.AutoService;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -48,12 +50,18 @@ public class AffluxProcessor extends AbstractProcessor {
      */
     private Logger mLogger;
 
+    private static final Class<? extends Annotation>[] LISTENERS = new Class[]{
+            OnClick.class,
+            OnLongClick.class
+    };
+
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         mElementUtils = processingEnv.getElementUtils();
         mFiler = processingEnv.getFiler();
-        mLogger = new Logger(processingEnv.getMessager());
+        mLogger = Logger.instance();
+        mLogger.setMessager(processingEnv.getMessager());
     }
 
     @Override
@@ -74,7 +82,7 @@ public class AffluxProcessor extends AbstractProcessor {
 
         annotations.add(BindView.class);
         annotations.add(BindString.class);
-        annotations.add(OnClick.class);
+        annotations.addAll(Arrays.asList(LISTENERS));
 
         return annotations;
     }
@@ -95,11 +103,13 @@ public class AffluxProcessor extends AbstractProcessor {
             BindingViewField field = new BindingViewField(element);
             binding.addBindingViewField(field);
         }
-        for (Element element : roundEnv.getElementsAnnotatedWith(OnClick.class)) {
-            TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
-            BindingClass binding = getBindingClass(bindingClassMap, enclosingElement);
-            BindingViewMethod method = new BindingViewMethod(element, OnClick.class);
-            binding.addBindingViewMethod(method);
+        for (Class<? extends Annotation> annotationClass : LISTENERS) {
+            for (Element element : roundEnv.getElementsAnnotatedWith(annotationClass)) {
+                TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
+                BindingClass binding = getBindingClass(bindingClassMap, enclosingElement);
+                BindingViewMethod method = new BindingViewMethod(element, annotationClass);
+                binding.addBindingViewMethod(method);
+            }
         }
         for (BindingClass binding : bindingClassMap.values()) {
             try {
@@ -108,7 +118,7 @@ public class AffluxProcessor extends AbstractProcessor {
                 e.printStackTrace();
             }
         }
-        throw new IllegalArgumentException("222");
+        //throw new IllegalArgumentException("222");
     }
 
     private BindingClass getBindingClass(Map<String, BindingClass> map, TypeElement enclosingElement) {

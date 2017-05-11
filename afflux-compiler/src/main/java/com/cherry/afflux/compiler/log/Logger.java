@@ -12,9 +12,20 @@ public final class Logger {
     /**
      * log tools
      */
+    private static Logger instance;
     private Messager mMessager;
 
-    public Logger(Messager messager) {
+    public static Logger instance() {
+        if (instance == null)
+            instance = new Logger();
+        return instance;
+    }
+
+    private Logger() {
+
+    }
+
+    public void setMessager(Messager messager) {
         this.mMessager = messager;
     }
 

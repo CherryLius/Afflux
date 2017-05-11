@@ -6,14 +6,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.cherry.afflux.annotation.BindView;
 import com.cherry.afflux.annotation.OnClick;
+import com.cherry.afflux.annotation.OnLongClick;
 import com.cherry.afflux.api.Afflux;
 
 public class MainActivity extends AppCompatActivity {
 
-    @BindView(R.id.text)
+    @BindView(R.id.text_0)
     TextView textView;
 
     @Override
@@ -25,9 +27,15 @@ public class MainActivity extends AppCompatActivity {
         new Holder(LayoutInflater.from(this).inflate(R.layout.activity_main, null));
     }
 
-    @OnClick(R.id.text)
+    @OnClick({R.id.button_0, R.id.text_0})
     void onClick(View view) {
+        Toast.makeText(this, "onclick " + view, Toast.LENGTH_SHORT).show();
+    }
 
+    @OnLongClick({R.id.button_0, R.id.button_1})
+    boolean onLongClick() {
+        Toast.makeText(this, "onLongClick ", Toast.LENGTH_SHORT).show();
+        return false;
     }
 
     class Holder {
