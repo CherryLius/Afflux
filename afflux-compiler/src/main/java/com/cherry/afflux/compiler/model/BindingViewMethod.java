@@ -72,6 +72,10 @@ public class BindingViewMethod {
         return mListenerClass.setter();
     }
 
+    public TypeName targetType() {
+        return ClassName.bestGuess(mListenerClass.targetType());
+    }
+
     public TypeSpec generateListener() {
         if (!checkInvalid()) return null;
         checkParameters();
@@ -85,7 +89,7 @@ public class BindingViewMethod {
         //method params
         String[] params = mListenerMethod.parameters();
         for (int i = 0; i < params.length; i++) {
-            m.addParameter(ClassName.bestGuess(params[i]), ("arg" + i));
+            m.addParameter(bestGuess(params[i]), ("arg" + i));
         }
         CodeBlock.Builder codeBuilder = CodeBlock.builder();
         boolean hasReturn = !"void".equals(mListenerMethod.returnType());
@@ -154,7 +158,7 @@ public class BindingViewMethod {
                     continue;
                 String listenerParam = listenerParams[j];
                 Logger.out("listener method param %s", listenerParam);
-                isSubTypeOfType(paramType, listenerParam);
+                Logger.err("sub type %s", isSubTypeOfType(paramType, listenerParam));
                 if (isTypeEquals(paramType, listenerParam)
                         || isInterface(paramType)) {
                     parameterArray[i] = new Parameter(j, TypeName.get(paramType));
@@ -264,7 +268,22 @@ public class BindingViewMethod {
             if (builder.toString().equals(otherType))
                 return true;
         }
-        //Element element = declaredType.asElement();
+        Element element = declaredType.asElement();
+        if (!(element instanceof TypeElement)) {
+            return false;
+        }
+        TypeElement typeElement = (TypeElement) element;
+        TypeMirror superType = typeElement.getSuperclass();
+        Logger.err("element %s, %s %s %s", element, declaredType, typeElement, superType);
+        if (isSubTypeOfType(superType, otherType)) {
+            return true;
+        }
+        for (TypeMirror interfaceType : typeElement.getInterfaces()) {
+            if (isSubTypeOfType(interfaceType, otherType)) {
+                return true;
+            }
+        }
+        //listener method params type
         return false;
     }
 }

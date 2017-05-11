@@ -1,1 +1,1 @@
-include ':app', ':afflux-annotation', ':afflux-compiler', ':afflux-api'
+include ':app', ':afflux-annotation', ':afflux-compiler', ':afflux-api', ':app-butter'

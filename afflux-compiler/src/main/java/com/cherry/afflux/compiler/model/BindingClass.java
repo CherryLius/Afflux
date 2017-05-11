@@ -25,7 +25,7 @@ public class BindingClass extends AnnotatedClass {
     private List<BindingViewField> mBindingFieldLists;
     private List<BindingViewMethod> mBindingMethodLists;
 
-    private Map<Integer, String> mListenerFieldMap = new HashMap<>();
+    private Map<Integer, FieldBinding> mListenerFieldMap = new HashMap<>();
     private Map<Integer, String> mTargetFieldMap = new HashMap<>();
 
     public BindingClass(Elements elementUtils, TypeElement element) {
@@ -73,9 +73,10 @@ public class BindingClass extends AnnotatedClass {
                     field.getViewId());
         }
 
-        for (Map.Entry<Integer, String> entry : mListenerFieldMap.entrySet()) {
-            constructor.addStatement("this.$N = source.findViewById($L)",
-                    entry.getValue(),
+        for (Map.Entry<Integer, FieldBinding> entry : mListenerFieldMap.entrySet()) {
+            constructor.addStatement("this.$N = ($T)source.findViewById($L)",
+                    entry.getValue().getName(),
+                    entry.getValue().getTypeName(),
                     entry.getKey());
         }
 
@@ -93,7 +94,7 @@ public class BindingClass extends AnnotatedClass {
                             method.setter(),
                             listener);
                 } else {
-                    fieldName = getBindingFieldName(viewId);
+                    fieldName = getBindingFieldName(viewId).getName();
                     constructor.addStatement("this.$N.$N($L)",
                             fieldName,
                             method.setter(),
@@ -105,8 +106,8 @@ public class BindingClass extends AnnotatedClass {
     }
 
     private void addListenerField(TypeSpec.Builder typeBuilder) {
-        for (String fieldName : mListenerFieldMap.values()) {
-            typeBuilder.addField(Type.VIEW, fieldName);
+        for (FieldBinding field : mListenerFieldMap.values()) {
+            typeBuilder.addField(field.getTypeName(), field.getName());
         }
     }
 
@@ -124,7 +125,7 @@ public class BindingClass extends AnnotatedClass {
                             fieldName,
                             m.setter());
                 } else {
-                    fieldName = getBindingFieldName(viewId);
+                    fieldName = getBindingFieldName(viewId).getName();
                     method.addStatement("this.$N.$N(null)",
                             fieldName,
                             m.setter());
@@ -136,8 +137,8 @@ public class BindingClass extends AnnotatedClass {
                     field.getSimpleName());
         }
 
-        for (String field : mListenerFieldMap.values()) {
-            method.addStatement("this.$N = null", field);
+        for (FieldBinding field : mListenerFieldMap.values()) {
+            method.addStatement("this.$N = null", field.getName());
         }
         method.addStatement("this.target = null");
         return method.build();
@@ -153,20 +154,21 @@ public class BindingClass extends AnnotatedClass {
                         putTargetFieldName(viewId, field.getSimpleName().toString());
                     } else {
                         String fieldName = String.format("view%d", viewId);
-                        putBindingFieldName(viewId, fieldName);
+                        putBindingFieldName(viewId, fieldName, method.targetType());
                     }
                 }
             }
         }
     }
 
-    private void putBindingFieldName(int viewId, String fieldName) {
+    private void putBindingFieldName(int viewId, String fieldName, TypeName fieldType) {
         if (!mListenerFieldMap.containsKey(viewId)) {
-            mListenerFieldMap.put(viewId, fieldName);
+            FieldBinding field = new FieldBinding(fieldName, fieldType);
+            mListenerFieldMap.put(viewId, field);
         }
     }
 
-    private String getBindingFieldName(int viewId) {
+    private FieldBinding getBindingFieldName(int viewId) {
         return mListenerFieldMap.get(viewId);
     }
 

@@ -2,8 +2,12 @@ package com.cherry.afflux.compiler;
 
 import com.cherry.afflux.annotation.BindString;
 import com.cherry.afflux.annotation.BindView;
+import com.cherry.afflux.annotation.OnCheckedChanged;
 import com.cherry.afflux.annotation.OnClick;
+import com.cherry.afflux.annotation.OnEditorAction;
+import com.cherry.afflux.annotation.OnFocusChange;
 import com.cherry.afflux.annotation.OnLongClick;
+import com.cherry.afflux.annotation.OnTouch;
 import com.cherry.afflux.compiler.log.Logger;
 import com.cherry.afflux.compiler.model.BindingClass;
 import com.cherry.afflux.compiler.model.BindingViewField;
@@ -51,8 +55,12 @@ public class AffluxProcessor extends AbstractProcessor {
     private Logger mLogger;
 
     private static final Class<? extends Annotation>[] LISTENERS = new Class[]{
+            OnCheckedChanged.class,
             OnClick.class,
-            OnLongClick.class
+            OnEditorAction.class,
+            OnFocusChange.class,
+            OnLongClick.class,
+            OnTouch.class,
     };
 
     @Override
