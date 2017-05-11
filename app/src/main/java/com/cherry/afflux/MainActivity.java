@@ -12,17 +12,19 @@ import com.cherry.afflux.annotation.BindView;
 import com.cherry.afflux.annotation.OnClick;
 import com.cherry.afflux.annotation.OnLongClick;
 import com.cherry.afflux.api.Afflux;
+import com.cherry.afflux.api.Unbinder;
 
 public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.text_0)
     TextView textView;
+    Unbinder unbinder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Afflux.bind(this);
+        unbinder = Afflux.bind(this);
         textView.setText("11111");
         new Holder(LayoutInflater.from(this).inflate(R.layout.activity_main, null));
     }
@@ -33,9 +35,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @OnLongClick({R.id.button_0, R.id.button_1})
-    boolean onLongClick() {
+    boolean onLongClick(View view) {
         Toast.makeText(this, "onLongClick ", Toast.LENGTH_SHORT).show();
         return false;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbinder.unbind();
     }
 
     class Holder {
