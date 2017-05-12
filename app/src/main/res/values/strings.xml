@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Afflux</string>
+    <bool name="bool_success">false</bool>
+    <integer name="index">1111</integer>
 </resources>

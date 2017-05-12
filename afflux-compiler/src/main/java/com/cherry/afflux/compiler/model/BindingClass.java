@@ -28,6 +28,7 @@ import javax.lang.model.util.Elements;
 public class BindingClass extends AnnotatedClass {
 
     private List<BindingViewField> mBindingFieldLists;
+    private List<BindingResourceField> mBindingResourceFieldLists;
 
     private Map<Integer, FieldBinding> mListenerFieldMap = new HashMap<>();
     private Map<Integer, MethodBinding> mListenerMethodMap = new HashMap<>();
@@ -35,10 +36,15 @@ public class BindingClass extends AnnotatedClass {
     public BindingClass(Elements elementUtils, TypeElement element) {
         super(elementUtils, element);
         mBindingFieldLists = new ArrayList<>();
+        mBindingResourceFieldLists = new ArrayList<>();
     }
 
     public void addBindingViewField(BindingViewField field) {
         mBindingFieldLists.add(field);
+    }
+
+    public void addBindingResourceField(BindingResourceField field) {
+        mBindingResourceFieldLists.add(field);
     }
 
     public void addBindingViewMethod(BindingViewMethod method) {
@@ -76,6 +82,10 @@ public class BindingClass extends AnnotatedClass {
                 .addParameter(getTypeName(), "target", Modifier.FINAL)
                 .addParameter(Type.VIEW, "source")
                 .addStatement("this.target = target");
+        //init resource
+        for (BindingResourceField field: mBindingResourceFieldLists) {
+            constructor.addCode(field.generateCode());
+        }
 
         // init view
         for (BindingViewField field : mBindingFieldLists) {
@@ -207,9 +217,15 @@ public class BindingClass extends AnnotatedClass {
             }
         }
 
+        //unbind view
         for (BindingViewField field : mBindingFieldLists) {
             method.addStatement("this.target.$N = null",
                     field.getSimpleName());
+        }
+
+        //unbind resource
+        for (BindingResourceField field: mBindingResourceFieldLists) {
+            method.addCode(field.generateUnbindCode());
         }
 
         for (FieldBinding field : mListenerFieldMap.values()) {

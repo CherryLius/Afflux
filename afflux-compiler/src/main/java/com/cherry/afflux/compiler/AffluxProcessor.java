@@ -1,5 +1,10 @@
 package com.cherry.afflux.compiler;
 
+import com.cherry.afflux.annotation.BindBoolean;
+import com.cherry.afflux.annotation.BindColor;
+import com.cherry.afflux.annotation.BindDrawable;
+import com.cherry.afflux.annotation.BindFloat;
+import com.cherry.afflux.annotation.BindInt;
 import com.cherry.afflux.annotation.BindString;
 import com.cherry.afflux.annotation.BindView;
 import com.cherry.afflux.annotation.OnCheckedChanged;
@@ -17,6 +22,7 @@ import com.cherry.afflux.annotation.OnTextChanged;
 import com.cherry.afflux.annotation.OnTouch;
 import com.cherry.afflux.compiler.log.Logger;
 import com.cherry.afflux.compiler.model.BindingClass;
+import com.cherry.afflux.compiler.model.BindingResourceField;
 import com.cherry.afflux.compiler.model.BindingViewField;
 import com.cherry.afflux.compiler.model.BindingViewMethod;
 import com.google.auto.service.AutoService;
@@ -77,6 +83,25 @@ public class AffluxProcessor extends AbstractProcessor {
             OnTouch.class,
     };
 
+    private static final Class<? extends Annotation>[] RESOURCE_ANNOTATIONS = new Class[]{
+            BindBoolean.class,
+            BindColor.class,
+            BindDrawable.class,
+            BindFloat.class,
+            BindInt.class,
+            BindString.class,
+    };
+
+    private static final String[] RESOURCE_TYPE = new String[]{
+            BindingResourceField.ResourceType.GET_BOOLEAN,
+            BindingResourceField.ResourceType.GET_COLOR,
+            BindingResourceField.ResourceType.GET_DRAWABLE,
+            BindingResourceField.ResourceType.GET_FLOAT,
+            BindingResourceField.ResourceType.GET_INT,
+            BindingResourceField.ResourceType.GET_STRING,
+
+    };
+
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
@@ -101,10 +126,9 @@ public class AffluxProcessor extends AbstractProcessor {
 
     private Set<Class<? extends Annotation>> getSupportedAnnotations() {
         Set<Class<? extends Annotation>> annotations = new LinkedHashSet<>();
-
         annotations.add(BindView.class);
-        annotations.add(BindString.class);
         annotations.addAll(Arrays.asList(LISTENERS));
+        annotations.addAll(Arrays.asList(RESOURCE_ANNOTATIONS));
 
         return annotations;
     }
@@ -119,6 +143,16 @@ public class AffluxProcessor extends AbstractProcessor {
 
     private void findAndParseTargets(RoundEnvironment roundEnv) {
         Map<String, BindingClass> bindingClassMap = new LinkedHashMap<>();
+        for (int i = 0; i < RESOURCE_ANNOTATIONS.length; i++) {
+            for (Element element : roundEnv.getElementsAnnotatedWith(RESOURCE_ANNOTATIONS[i])) {
+                TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
+                BindingClass binding = getBindingClass(bindingClassMap, enclosingElement);
+                BindingResourceField field = new BindingResourceField(element,
+                        RESOURCE_ANNOTATIONS[i],
+                        RESOURCE_TYPE[i]);
+                binding.addBindingResourceField(field);
+            }
+        }
         for (Element element : roundEnv.getElementsAnnotatedWith(BindView.class)) {
             TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
             BindingClass binding = getBindingClass(bindingClassMap, enclosingElement);

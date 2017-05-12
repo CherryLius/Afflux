@@ -13,7 +13,7 @@ import java.util.Map;
  * Created by LHEE on 2017/3/14.
  */
 
-public class Afflux {
+public final class Afflux {
 
     private static final String TAG = "Afflux";
     private static final Map<Class<?>, Constructor<? extends Unbinder>> BINDERS = new LinkedHashMap<>();

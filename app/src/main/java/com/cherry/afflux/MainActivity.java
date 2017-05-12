@@ -1,6 +1,8 @@
 package com.cherry.afflux;
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.DragEvent;
@@ -16,6 +18,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cherry.afflux.annotation.BindBoolean;
+import com.cherry.afflux.annotation.BindColor;
+import com.cherry.afflux.annotation.BindDrawable;
+import com.cherry.afflux.annotation.BindInt;
+import com.cherry.afflux.annotation.BindString;
 import com.cherry.afflux.annotation.BindView;
 import com.cherry.afflux.annotation.OnCheckedChanged;
 import com.cherry.afflux.annotation.OnClick;
@@ -39,6 +46,14 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.list_view)
     View listView;
     Unbinder unbinder;
+    @BindString(R.string.app_name)
+    String appName;
+    @BindColor(R.color.colorPrimary)
+    int color;
+    @BindBoolean(R.bool.bool_success)
+    boolean flag;
+    @BindInt(R.integer.index)
+    int index;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,6 +144,8 @@ public class MainActivity extends AppCompatActivity {
     class Holder {
         @BindView(R.id.text_0)
         TextView textView;
+        @BindDrawable(R.mipmap.ic_launcher)
+        Drawable drawable;
 
         Holder(View contentView) {
             Afflux.bind(this, contentView);

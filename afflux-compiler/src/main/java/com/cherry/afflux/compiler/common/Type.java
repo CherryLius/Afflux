@@ -19,6 +19,7 @@ public interface Type {
     ClassName CREATOR = ClassName.get("android.os", "Parcelable", "Creator");
     ClassName UNBINDER = ClassName.get("com.cherry.afflux.api", "Unbinder");
     ClassName VIEW = ClassName.get("android.view", "View");
+    ClassName AFFLUX_UTILS = ClassName.get("com.cherry.afflux.api.internal", "Utils");
 
     static TypeName bestGuess(String type) {
         switch (type) {
