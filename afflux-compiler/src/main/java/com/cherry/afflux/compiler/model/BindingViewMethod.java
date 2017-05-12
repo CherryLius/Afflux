@@ -2,14 +2,13 @@ package com.cherry.afflux.compiler.model;
 
 import com.cherry.afflux.annotation.internal.ListenerClass;
 import com.cherry.afflux.annotation.internal.ListenerMethod;
+import com.cherry.afflux.compiler.common.Type;
 import com.cherry.afflux.compiler.log.Logger;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -18,7 +17,6 @@ import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -33,10 +31,11 @@ import javax.lang.model.type.TypeVariable;
 public class BindingViewMethod {
     private ExecutableElement mExecutableElement;
     private List<? extends VariableElement> mMethodParams;
+    private List<Parameter> mParameterList;
+
     private ListenerClass mListenerClass;
     private ListenerMethod mListenerMethod;
     private Class<? extends Annotation> mAnnotationClass;
-    private List<Parameter> mParameterList;
 
     private int[] mViewIds;
 
@@ -54,7 +53,9 @@ public class BindingViewMethod {
             mViewIds = (int[]) method.invoke(annotation);
             //listener class info
             mListenerClass = annotationClass.getAnnotation(ListenerClass.class);
-            mListenerMethod = mListenerClass.method();
+            initMethod(annotation);
+            if (!checkInvalid())
+                throw new IllegalStateException("method check invalid fail");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -68,50 +69,19 @@ public class BindingViewMethod {
         return mViewIds;
     }
 
-    public String setter() {
-        return mListenerClass.setter();
+    public ListenerClass getListenerClass() {
+        return mListenerClass;
     }
 
-    public TypeName targetType() {
-        return ClassName.bestGuess(mListenerClass.targetType());
+    public ListenerMethod getListenerMethod() {
+        return mListenerMethod;
     }
 
-    public TypeSpec generateListener() {
-        if (!checkInvalid()) return null;
-        checkParameters();
-        TypeSpec.Builder listener = TypeSpec.anonymousClassBuilder("")
-                .addSuperinterface(ClassName.bestGuess(mListenerClass.type()));
-        MethodSpec.Builder m = MethodSpec.methodBuilder(mListenerMethod.name())
-                .addAnnotation(Override.class)
-                .addModifiers(Modifier.PUBLIC)
-                .returns(bestGuess(mListenerMethod.returnType()));
-
-        //method params
-        String[] params = mListenerMethod.parameters();
-        for (int i = 0; i < params.length; i++) {
-            m.addParameter(bestGuess(params[i]), ("arg" + i));
-        }
-        CodeBlock.Builder codeBuilder = CodeBlock.builder();
-        boolean hasReturn = !"void".equals(mListenerMethod.returnType());
-        if (hasReturn) {
-            codeBuilder.add("return ");
-        }
-        codeBuilder.add("target.$N(", getSimpleName());
-        for (int i = 0; i < mParameterList.size(); i++) {
-            Parameter parameter = mParameterList.get(i);
-            int listenerPosition = parameter.getPosition();
-            if (i > 0) {
-                codeBuilder.add(", ");
-            }
-            codeBuilder.add("arg$L", listenerPosition);
-        }
-        codeBuilder.add(");\n");
-        m.addCode(codeBuilder.build());
-        listener.addMethod(m.build());
-        return listener.build();
+    public List<Parameter> getParameters() {
+        return mParameterList;
     }
 
-    private boolean checkInvalid() {
+    public boolean checkInvalid() {
         TypeElement enclosingElement = (TypeElement) mExecutableElement.getEnclosingElement();
         if (mMethodParams.size() > mListenerMethod.parameters().length) {
             Logger.instance().error(mExecutableElement, "@%s methods can have most %s parameter(s). (%s.%s)",
@@ -157,10 +127,11 @@ public class BindingViewMethod {
                 if (bitSet.get(j))
                     continue;
                 String listenerParam = listenerParams[j];
-                Logger.out("listener method param %s", listenerParam);
-                Logger.err("sub type %s", isSubTypeOfType(paramType, listenerParam));
+                Logger.out("listener method param %s,%s", listenerParam, paramType);
                 if (isTypeEquals(paramType, listenerParam)
-                        || isInterface(paramType)) {
+                        || isInterface(paramType)
+                        || (isSubTypeOfType(paramType, listenerParam)
+                        && isSubTypeOfType(paramType, Type.VIEW.simpleName()))) {
                     parameterArray[i] = new Parameter(j, TypeName.get(paramType));
                     bitSet.set(j);
                 }
@@ -208,28 +179,29 @@ public class BindingViewMethod {
         return true;
     }
 
-    private static TypeName bestGuess(String type) {
-        switch (type) {
-            case "void":
-                return TypeName.VOID;
-            case "boolean":
-                return TypeName.BOOLEAN;
-            case "byte":
-                return TypeName.BYTE;
-            case "char":
-                return TypeName.CHAR;
-            case "double":
-                return TypeName.DOUBLE;
-            case "float":
-                return TypeName.FLOAT;
-            case "int":
-                return TypeName.INT;
-            case "long":
-                return TypeName.LONG;
-            case "short":
-                return TypeName.SHORT;
-            default:
-                return ClassName.bestGuess(type);
+    private void initMethod(Annotation annotation) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        ListenerMethod[] listenerMethods = mListenerClass.method();
+        if (listenerMethods.length > 1) {
+            throw new IllegalStateException(String.format("Multiple listener methods specified on @%s.",
+                    mAnnotationClass.getSimpleName()));
+        } else if (listenerMethods.length == 1) {
+            if (mListenerClass.callbacks() != ListenerClass.NONE.class) {
+                throw new IllegalStateException(
+                        String.format("Both method() and callback() defined on @%s.",
+                                mAnnotationClass.getSimpleName()));
+            }
+            mListenerMethod = listenerMethods[0];
+        } else {
+            Method method = mAnnotationClass.getDeclaredMethod("callback");
+            Enum<?> callback = (Enum<?>) method.invoke(annotation);
+            Field callbackField = callback.getDeclaringClass().getDeclaredField(callback.name());
+            mListenerMethod = callbackField.getAnnotation(ListenerMethod.class);
+            if (mListenerMethod == null) {
+                throw new IllegalStateException(
+                        String.format("No @%s defined on @%s's %s.%s.", ListenerMethod.class.getSimpleName(),
+                                mAnnotationClass.getSimpleName(), callback.getDeclaringClass().getSimpleName(),
+                                callback.name()));
+            }
         }
     }
 
@@ -246,7 +218,7 @@ public class BindingViewMethod {
     }
 
     private static boolean isSubTypeOfType(TypeMirror typeMirror, String otherType) {
-        Logger.out("isSubTypeOfType %s , %s", typeMirror, otherType);
+        //Logger.out("isSubTypeOfType %s , %s", typeMirror, otherType);
         if (isTypeEquals(typeMirror, otherType))
             return true;
         if (typeMirror.getKind() != TypeKind.DECLARED) {
@@ -274,7 +246,7 @@ public class BindingViewMethod {
         }
         TypeElement typeElement = (TypeElement) element;
         TypeMirror superType = typeElement.getSuperclass();
-        Logger.err("element %s, %s %s %s", element, declaredType, typeElement, superType);
+        //Logger.err("element %s, %s %s %s", element, declaredType, typeElement, superType);
         if (isSubTypeOfType(superType, otherType)) {
             return true;
         }

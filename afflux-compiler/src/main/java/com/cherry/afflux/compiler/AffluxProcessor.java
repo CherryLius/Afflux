@@ -6,7 +6,12 @@ import com.cherry.afflux.annotation.OnCheckedChanged;
 import com.cherry.afflux.annotation.OnClick;
 import com.cherry.afflux.annotation.OnEditorAction;
 import com.cherry.afflux.annotation.OnFocusChange;
+import com.cherry.afflux.annotation.OnItemClick;
+import com.cherry.afflux.annotation.OnItemLongClick;
+import com.cherry.afflux.annotation.OnItemSelected;
 import com.cherry.afflux.annotation.OnLongClick;
+import com.cherry.afflux.annotation.OnPageChange;
+import com.cherry.afflux.annotation.OnTextChanged;
 import com.cherry.afflux.annotation.OnTouch;
 import com.cherry.afflux.compiler.log.Logger;
 import com.cherry.afflux.compiler.model.BindingClass;
@@ -59,7 +64,12 @@ public class AffluxProcessor extends AbstractProcessor {
             OnClick.class,
             OnEditorAction.class,
             OnFocusChange.class,
+            OnItemClick.class,
+            OnItemLongClick.class,
+            OnItemSelected.class,
             OnLongClick.class,
+            OnPageChange.class,
+            OnTextChanged.class,
             OnTouch.class,
     };
 
@@ -126,7 +136,7 @@ public class AffluxProcessor extends AbstractProcessor {
                 e.printStackTrace();
             }
         }
-        //throw new IllegalArgumentException("222");
+//        throw new IllegalArgumentException("222");
     }
 
     private BindingClass getBindingClass(Map<String, BindingClass> map, TypeElement enclosingElement) {

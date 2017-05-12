@@ -15,7 +15,15 @@ public @interface ListenerClass {
 
     String setter();
 
+    String remover() default "";
+
     String type();
 
-    ListenerMethod method();
+    ListenerMethod[] method() default {};
+
+    Class<? extends Enum<?>> callbacks() default NONE.class;
+
+    enum NONE {
+
+    }
 }

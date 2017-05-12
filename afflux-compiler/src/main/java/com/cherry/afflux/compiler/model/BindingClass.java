@@ -1,7 +1,9 @@
 package com.cherry.afflux.compiler.model;
 
+import com.cherry.afflux.annotation.internal.ListenerClass;
 import com.cherry.afflux.compiler.common.Method;
 import com.cherry.afflux.compiler.common.Type;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -23,15 +25,14 @@ import javax.lang.model.util.Elements;
 public class BindingClass extends AnnotatedClass {
 
     private List<BindingViewField> mBindingFieldLists;
-    private List<BindingViewMethod> mBindingMethodLists;
+    //private List<BindingViewMethod> mBindingMethodLists;
 
     private Map<Integer, FieldBinding> mListenerFieldMap = new HashMap<>();
-    private Map<Integer, String> mTargetFieldMap = new HashMap<>();
+    private Map<Integer, MethodBinding> mListenerMethodMap = new HashMap<>();
 
     public BindingClass(Elements elementUtils, TypeElement element) {
         super(elementUtils, element);
         mBindingFieldLists = new ArrayList<>();
-        mBindingMethodLists = new ArrayList<>();
     }
 
     public void addBindingViewField(BindingViewField field) {
@@ -39,7 +40,16 @@ public class BindingClass extends AnnotatedClass {
     }
 
     public void addBindingViewMethod(BindingViewMethod method) {
-        mBindingMethodLists.add(method);
+        for (int id : method.getViewIds()) {
+            MethodBinding binding = mListenerMethodMap.get(id);
+            if (binding == null) {
+                binding = new MethodBinding(id);
+                binding.addMethod(method);
+                mListenerMethodMap.put(id, binding);
+            } else {
+                binding.addMethod(method);
+            }
+        }
     }
 
     @Override
@@ -81,27 +91,82 @@ public class BindingClass extends AnnotatedClass {
         }
 
         //set listener
-        for (BindingViewMethod method : mBindingMethodLists) {
-            TypeSpec listener = method.generateListener();
-            if (listener == null)
-                break;
-            int[] viewIds = method.getViewIds();
-            for (int viewId : viewIds) {
-                String fieldName = getTargetFieldName(viewId);
-                if (fieldName != null) {
-                    constructor.addStatement("target.$N.$N($L)",
-                            fieldName,
-                            method.setter(),
-                            listener);
-                } else {
-                    fieldName = getBindingFieldName(viewId).getName();
-                    constructor.addStatement("this.$N.$N($L)",
-                            fieldName,
-                            method.setter(),
+        for (MethodBinding binding : mListenerMethodMap.values())
+            for (Map.Entry<ListenerClass, List<BindingViewMethod>> entry : binding.getMethodMap().entrySet()) {
+                int viewId = binding.getViewId();
+                TypeSpec listener = binding.generateListener(entry.getKey(), entry.getValue());
+                TypeName keyType = Type.bestGuess(entry.getKey().targetType());
+                boolean requireRemove = !"".equals(entry.getKey().remover());
+                BindingViewField field = getBindingViewFiled(viewId);
+
+                //remover type
+                TypeName listenerType = Type.bestGuess(entry.getKey().type());
+                String listenerField = String.format("view%d%s", viewId, ((ClassName) listenerType).simpleName());
+                if (requireRemove) {
+                    constructor.addStatement("this.$N = $L",
+                            listenerField,
                             listener);
                 }
+                if (field != null) {
+                    String fieldName = field.getSimpleName();
+                    if (field.getTypeName().equals(keyType)) {
+                        if (requireRemove) {
+                            constructor.addStatement("target.$N.$N($N)",
+                                    fieldName,
+                                    entry.getKey().setter(),
+                                    listenerField);
+                        } else {
+                            constructor.addStatement("target.$N.$N($L)",
+                                    fieldName,
+                                    entry.getKey().setter(),
+                                    listener);
+                        }
+                    } else {
+                        if (requireRemove) {
+                            constructor.addStatement("(($T)target.$N).$N($N)",
+                                    keyType,
+                                    fieldName,
+                                    entry.getKey().setter(),
+                                    listenerField);
+                        } else {
+                            constructor.addStatement("(($T)target.$N).$N($L)",
+                                    keyType,
+                                    fieldName,
+                                    entry.getKey().setter(),
+                                    listener);
+                        }
+                    }
+                } else {
+                    String fieldName = getBindingFieldName(viewId).getName();
+                    if (Type.VIEW.equals(keyType)) {
+                        if (requireRemove) {
+                            constructor.addStatement("this.$N.$N($N)",
+                                    fieldName,
+                                    entry.getKey().setter(),
+                                    listenerField);
+                        } else {
+                            constructor.addStatement("this.$N.$N($L)",
+                                    fieldName,
+                                    entry.getKey().setter(),
+                                    listener);
+                        }
+                    } else {
+                        if (requireRemove) {
+                            constructor.addStatement("(($T)this.$N).$N($N)",
+                                    keyType,
+                                    fieldName,
+                                    entry.getKey().setter(),
+                                    listenerField);
+                        } else {
+                            constructor.addStatement("(($T)this.$N).$N($L)",
+                                    keyType,
+                                    fieldName,
+                                    entry.getKey().setter(),
+                                    listener);
+                        }
+                    }
+                }
             }
-        }
         return constructor.build();
     }
 
@@ -109,6 +174,19 @@ public class BindingClass extends AnnotatedClass {
         for (FieldBinding field : mListenerFieldMap.values()) {
             typeBuilder.addField(field.getTypeName(), field.getName());
         }
+
+        for (MethodBinding binding : mListenerMethodMap.values()) {
+            int id = binding.getViewId();
+            for (ListenerClass listenerClass : binding.getMethodMap().keySet()) {
+                boolean requireRemover = !"".equals(listenerClass.remover());
+                if (requireRemover) {
+                    TypeName typeName = Type.bestGuess(listenerClass.type());
+                    String fieldName = String.format("view%d%s", id, ((ClassName) typeName).simpleName());
+                    typeBuilder.addField(typeName, fieldName, Modifier.PRIVATE);
+                }
+            }
+        }
+
     }
 
     private MethodSpec buildUnbindMethod() {
@@ -116,22 +194,78 @@ public class BindingClass extends AnnotatedClass {
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(TypeName.VOID);
-        for (BindingViewMethod m : mBindingMethodLists) {
-            int[] ids = m.getViewIds();
-            for (int viewId : ids) {
-                String fieldName = getTargetFieldName(viewId);
-                if (fieldName != null) {
-                    method.addStatement("this.target.$N.$N(null)",
-                            fieldName,
-                            m.setter());
+        for (MethodBinding binding : mListenerMethodMap.values()) {
+            int viewId = binding.getViewId();
+            for (ListenerClass listener : binding.getMethodMap().keySet()) {
+                TypeName keyType = Type.bestGuess(listener.targetType());
+                BindingViewField field = getBindingViewFiled(viewId);
+
+                boolean requireRemover = !"".equals(listener.remover());
+                TypeName typeName = Type.bestGuess(listener.type());
+                String listenerField = String.format("view%d%s", viewId, ((ClassName) typeName).simpleName());
+
+                if (field != null) {
+                    String fieldName = field.getSimpleName();
+                    if (field.getTypeName().equals(keyType)) {
+                        if (requireRemover) {
+                            method.addStatement("this.target.$N.$N($N)",
+                                    fieldName,
+                                    listener.remover(),
+                                    listenerField);
+                            method.addStatement("this.$N = null", listenerField);
+                        } else {
+                            method.addStatement("this.target.$N.$N(null)",
+                                    fieldName,
+                                    listener.setter());
+                        }
+                    } else {
+                        if (requireRemover) {
+                            method.addStatement("($T)this.target.$N).$N($N)",
+                                    keyType,
+                                    fieldName,
+                                    listener.remover(),
+                                    listenerField);
+                            method.addStatement("this.$N = null", listenerField);
+                        } else {
+                            method.addStatement("(($T)this.target.$N).$N(null)",
+                                    keyType,
+                                    fieldName,
+                                    listener.setter());
+                        }
+                    }
                 } else {
-                    fieldName = getBindingFieldName(viewId).getName();
-                    method.addStatement("this.$N.$N(null)",
-                            fieldName,
-                            m.setter());
+                    String fieldName = getBindingFieldName(viewId).getName();
+                    if (Type.VIEW.equals(keyType)) {
+                        if (requireRemover) {
+                            method.addStatement("this.$N.$N($N)",
+                                    fieldName,
+                                    listener.remover(),
+                                    listenerField);
+                            method.addStatement("this.$N = null", listenerField);
+                        } else {
+                            method.addStatement("this.$N.$N(null)",
+                                    fieldName,
+                                    listener.setter());
+                        }
+                    } else {
+                        if (requireRemover) {
+                            method.addStatement("(($T)this.$N).$N($N)",
+                                    keyType,
+                                    fieldName,
+                                    listener.remover(),
+                                    listenerField);
+                            method.addStatement("this.$N = null", listenerField);
+                        } else {
+                            method.addStatement("(($T)this.$N).$N(null)",
+                                    keyType,
+                                    fieldName,
+                                    listener.setter());
+                        }
+                    }
                 }
             }
         }
+
         for (BindingViewField field : mBindingFieldLists) {
             method.addStatement("this.target.$N = null",
                     field.getSimpleName());
@@ -147,23 +281,18 @@ public class BindingClass extends AnnotatedClass {
     private void bindFieldMethod() {
         for (BindingViewField field : mBindingFieldLists) {
             int id = field.getViewId();
-            for (BindingViewMethod method : mBindingMethodLists) {
-                int[] ids = method.getViewIds();
-                for (int viewId : ids) {
-                    if (id == viewId) {
-                        putTargetFieldName(viewId, field.getSimpleName().toString());
-                    } else {
-                        String fieldName = String.format("view%d", viewId);
-                        putBindingFieldName(viewId, fieldName, method.targetType());
-                    }
+            for (int viewId : mListenerMethodMap.keySet()) {
+                if (id != viewId) {
+                    String fieldName = String.format("view%d", viewId);
+                    putBindingFieldName(viewId, fieldName);
                 }
             }
         }
     }
 
-    private void putBindingFieldName(int viewId, String fieldName, TypeName fieldType) {
+    private void putBindingFieldName(int viewId, String fieldName) {
         if (!mListenerFieldMap.containsKey(viewId)) {
-            FieldBinding field = new FieldBinding(fieldName, fieldType);
+            FieldBinding field = new FieldBinding(fieldName, Type.VIEW);
             mListenerFieldMap.put(viewId, field);
         }
     }
@@ -172,15 +301,14 @@ public class BindingClass extends AnnotatedClass {
         return mListenerFieldMap.get(viewId);
     }
 
-    private void putTargetFieldName(int viewId, String fieldName) {
-        if (!mTargetFieldMap.containsKey(viewId)) {
-            mTargetFieldMap.put(viewId, fieldName);
+    private BindingViewField getBindingViewFiled(int viewId) {
+        for (int i = 0; i < mBindingFieldLists.size(); i++) {
+            BindingViewField field = mBindingFieldLists.get(i);
+            if (viewId == field.getViewId()) {
+                return field;
+            }
         }
+        return null;
     }
-
-    private String getTargetFieldName(int viewId) {
-        return mTargetFieldMap.get(viewId);
-    }
-
 
 }
