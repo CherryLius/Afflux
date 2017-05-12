@@ -4,6 +4,7 @@ import com.cherry.afflux.annotation.BindString;
 import com.cherry.afflux.annotation.BindView;
 import com.cherry.afflux.annotation.OnCheckedChanged;
 import com.cherry.afflux.annotation.OnClick;
+import com.cherry.afflux.annotation.OnDrag;
 import com.cherry.afflux.annotation.OnEditorAction;
 import com.cherry.afflux.annotation.OnFocusChange;
 import com.cherry.afflux.annotation.OnItemClick;
@@ -11,6 +12,7 @@ import com.cherry.afflux.annotation.OnItemLongClick;
 import com.cherry.afflux.annotation.OnItemSelected;
 import com.cherry.afflux.annotation.OnLongClick;
 import com.cherry.afflux.annotation.OnPageChange;
+import com.cherry.afflux.annotation.OnScroll;
 import com.cherry.afflux.annotation.OnTextChanged;
 import com.cherry.afflux.annotation.OnTouch;
 import com.cherry.afflux.compiler.log.Logger;
@@ -62,6 +64,7 @@ public class AffluxProcessor extends AbstractProcessor {
     private static final Class<? extends Annotation>[] LISTENERS = new Class[]{
             OnCheckedChanged.class,
             OnClick.class,
+            OnDrag.class,
             OnEditorAction.class,
             OnFocusChange.class,
             OnItemClick.class,
@@ -69,6 +72,7 @@ public class AffluxProcessor extends AbstractProcessor {
             OnItemSelected.class,
             OnLongClick.class,
             OnPageChange.class,
+            OnScroll.class,
             OnTextChanged.class,
             OnTouch.class,
     };

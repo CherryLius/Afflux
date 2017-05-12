@@ -5,6 +5,7 @@ import com.squareup.javapoet.TypeName;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * Created by Administrator on 2017/5/2.
@@ -24,6 +25,10 @@ public class BindingViewField {
 
     public int getViewId() {
         return mViewId;
+    }
+
+    public TypeMirror getTypeMirror() {
+        return mFieldElement.asType();
     }
 
     public TypeName getTypeName() {

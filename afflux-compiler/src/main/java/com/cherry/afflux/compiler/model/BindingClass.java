@@ -3,6 +3,8 @@ package com.cherry.afflux.compiler.model;
 import com.cherry.afflux.annotation.internal.ListenerClass;
 import com.cherry.afflux.compiler.common.Method;
 import com.cherry.afflux.compiler.common.Type;
+import com.cherry.afflux.compiler.log.Logger;
+import com.cherry.afflux.compiler.util.Utils;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -10,6 +12,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +28,6 @@ import javax.lang.model.util.Elements;
 public class BindingClass extends AnnotatedClass {
 
     private List<BindingViewField> mBindingFieldLists;
-    //private List<BindingViewMethod> mBindingMethodLists;
 
     private Map<Integer, FieldBinding> mListenerFieldMap = new HashMap<>();
     private Map<Integer, MethodBinding> mListenerMethodMap = new HashMap<>();
@@ -91,80 +93,48 @@ public class BindingClass extends AnnotatedClass {
         }
 
         //set listener
+        StringBuilder statementBuilder = new StringBuilder();
+        List<Object> args = new ArrayList<>();
         for (MethodBinding binding : mListenerMethodMap.values())
             for (Map.Entry<ListenerClass, List<BindingViewMethod>> entry : binding.getMethodMap().entrySet()) {
+                statementBuilder.delete(0, statementBuilder.length());
+                args.clear();
+
                 int viewId = binding.getViewId();
                 TypeSpec listener = binding.generateListener(entry.getKey(), entry.getValue());
                 TypeName keyType = Type.bestGuess(entry.getKey().targetType());
-                boolean requireRemove = !"".equals(entry.getKey().remover());
+                boolean requireRemover = !"".equals(entry.getKey().remover());
                 BindingViewField field = getBindingViewFiled(viewId);
 
                 //remover type
                 TypeName listenerType = Type.bestGuess(entry.getKey().type());
                 String listenerField = String.format("view%d%s", viewId, ((ClassName) listenerType).simpleName());
-                if (requireRemove) {
+
+                String fieldName;
+                boolean requireCast;
+
+                if (requireRemover) {
                     constructor.addStatement("this.$N = $L",
                             listenerField,
                             listener);
                 }
                 if (field != null) {
-                    String fieldName = field.getSimpleName();
-                    if (field.getTypeName().equals(keyType)) {
-                        if (requireRemove) {
-                            constructor.addStatement("target.$N.$N($N)",
-                                    fieldName,
-                                    entry.getKey().setter(),
-                                    listenerField);
-                        } else {
-                            constructor.addStatement("target.$N.$N($L)",
-                                    fieldName,
-                                    entry.getKey().setter(),
-                                    listener);
-                        }
-                    } else {
-                        if (requireRemove) {
-                            constructor.addStatement("(($T)target.$N).$N($N)",
-                                    keyType,
-                                    fieldName,
-                                    entry.getKey().setter(),
-                                    listenerField);
-                        } else {
-                            constructor.addStatement("(($T)target.$N).$N($L)",
-                                    keyType,
-                                    fieldName,
-                                    entry.getKey().setter(),
-                                    listener);
-                        }
-                    }
+                    fieldName = field.getSimpleName();
+                    requireCast = !Utils.isSubTypeOfType(field.getTypeMirror(), keyType.toString());
+                    statementBuilder.append(String.format(requireCast ? "(($T)%s)" : "%s", "this.target.$N"))
+                            .append(String.format(".$N(%s)", (requireRemover ? "$N" : "$L")));
                 } else {
-                    String fieldName = getBindingFieldName(viewId).getName();
-                    if (Type.VIEW.equals(keyType)) {
-                        if (requireRemove) {
-                            constructor.addStatement("this.$N.$N($N)",
-                                    fieldName,
-                                    entry.getKey().setter(),
-                                    listenerField);
-                        } else {
-                            constructor.addStatement("this.$N.$N($L)",
-                                    fieldName,
-                                    entry.getKey().setter(),
-                                    listener);
-                        }
-                    } else {
-                        if (requireRemove) {
-                            constructor.addStatement("(($T)this.$N).$N($N)",
-                                    keyType,
-                                    fieldName,
-                                    entry.getKey().setter(),
-                                    listenerField);
-                        } else {
-                            constructor.addStatement("(($T)this.$N).$N($L)",
-                                    keyType,
-                                    fieldName,
-                                    entry.getKey().setter(),
-                                    listener);
-                        }
-                    }
+                    fieldName = getBindingFieldName(viewId).getName();
+                    requireCast = !Type.VIEW.equals(keyType);
+                    statementBuilder.append(String.format(requireCast ? "(($T)%s)" : "%s", "this.$N"))
+                            .append(String.format(".$N(%s)", (requireRemover ? "$N" : "$L")));
+                }
+                if (requireCast) args.add(keyType);
+                args.add(fieldName);
+                args.add(entry.getKey().setter());
+                args.add(requireRemover ? listenerField : listener);
+                if (statementBuilder.length() > 0 && args.size() > 0) {
+                    constructor.addStatement(statementBuilder.toString(), args.toArray(new Object[]{}));
                 }
             }
         return constructor.build();
@@ -194,6 +164,9 @@ public class BindingClass extends AnnotatedClass {
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(TypeName.VOID);
+
+        StringBuilder statementBuilder = new StringBuilder();
+        List<Object> args = new ArrayList<>();
         for (MethodBinding binding : mListenerMethodMap.values()) {
             int viewId = binding.getViewId();
             for (ListenerClass listener : binding.getMethodMap().keySet()) {
@@ -204,64 +177,32 @@ public class BindingClass extends AnnotatedClass {
                 TypeName typeName = Type.bestGuess(listener.type());
                 String listenerField = String.format("view%d%s", viewId, ((ClassName) typeName).simpleName());
 
+                statementBuilder.delete(0, statementBuilder.length());
+                args.clear();
+                String fieldName;
+                boolean requireCast;
+
                 if (field != null) {
-                    String fieldName = field.getSimpleName();
-                    if (field.getTypeName().equals(keyType)) {
-                        if (requireRemover) {
-                            method.addStatement("this.target.$N.$N($N)",
-                                    fieldName,
-                                    listener.remover(),
-                                    listenerField);
-                            method.addStatement("this.$N = null", listenerField);
-                        } else {
-                            method.addStatement("this.target.$N.$N(null)",
-                                    fieldName,
-                                    listener.setter());
-                        }
-                    } else {
-                        if (requireRemover) {
-                            method.addStatement("($T)this.target.$N).$N($N)",
-                                    keyType,
-                                    fieldName,
-                                    listener.remover(),
-                                    listenerField);
-                            method.addStatement("this.$N = null", listenerField);
-                        } else {
-                            method.addStatement("(($T)this.target.$N).$N(null)",
-                                    keyType,
-                                    fieldName,
-                                    listener.setter());
-                        }
-                    }
+                    fieldName = field.getSimpleName();
+                    requireCast = !Utils.isSubTypeOfType(field.getTypeMirror(), keyType.toString());
+                    statementBuilder.append(String.format(requireCast ? "(($T)%s)" : "%s", "this.target.$N"))
+                            .append(String.format(".$N(%s)", (requireRemover ? "$N" : "null")));
                 } else {
-                    String fieldName = getBindingFieldName(viewId).getName();
-                    if (Type.VIEW.equals(keyType)) {
-                        if (requireRemover) {
-                            method.addStatement("this.$N.$N($N)",
-                                    fieldName,
-                                    listener.remover(),
-                                    listenerField);
-                            method.addStatement("this.$N = null", listenerField);
-                        } else {
-                            method.addStatement("this.$N.$N(null)",
-                                    fieldName,
-                                    listener.setter());
-                        }
-                    } else {
-                        if (requireRemover) {
-                            method.addStatement("(($T)this.$N).$N($N)",
-                                    keyType,
-                                    fieldName,
-                                    listener.remover(),
-                                    listenerField);
-                            method.addStatement("this.$N = null", listenerField);
-                        } else {
-                            method.addStatement("(($T)this.$N).$N(null)",
-                                    keyType,
-                                    fieldName,
-                                    listener.setter());
-                        }
-                    }
+                    fieldName = getBindingFieldName(viewId).getName();
+                    requireCast = !Type.VIEW.equals(keyType);
+                    statementBuilder.append(String.format(requireCast ? "(($T)%s)" : "%s", "this.$N"))
+                            .append(String.format(".$N(%s)", (requireRemover ? "$N" : "null")));
+                }
+
+                if (requireCast) args.add(keyType);
+                args.add(fieldName);
+                args.add(requireRemover ? listener.setter() : listener.setter());
+                if (requireRemover) args.add(listenerField);
+
+                if (statementBuilder.length() > 0 && args.size() > 0) {
+                    method.addStatement(statementBuilder.toString(), args.toArray(new Object[]{}));
+                    if (requireRemover)
+                        method.addStatement("this.$N = null", listenerField);
                 }
             }
         }

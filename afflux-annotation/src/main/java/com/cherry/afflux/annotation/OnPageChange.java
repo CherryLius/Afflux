@@ -17,7 +17,8 @@ import java.lang.annotation.Target;
         targetType = "android.support.v4.view.ViewPager",
         setter = "addOnPageChangeListener",
         remover = "removeOnPageChangeListener",
-        type = "android.support.v4.view.ViewPager.OnPageChangeListener"
+        type = "android.support.v4.view.ViewPager.OnPageChangeListener",
+        callbacks = OnPageChange.Callback.class
 )
 public @interface OnPageChange {
     int[] value() default 0;

@@ -3,23 +3,30 @@ package com.cherry.afflux;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cherry.afflux.annotation.BindView;
 import com.cherry.afflux.annotation.OnCheckedChanged;
 import com.cherry.afflux.annotation.OnClick;
+import com.cherry.afflux.annotation.OnDrag;
 import com.cherry.afflux.annotation.OnEditorAction;
 import com.cherry.afflux.annotation.OnFocusChange;
 import com.cherry.afflux.annotation.OnItemClick;
 import com.cherry.afflux.annotation.OnItemLongClick;
 import com.cherry.afflux.annotation.OnItemSelected;
 import com.cherry.afflux.annotation.OnLongClick;
+import com.cherry.afflux.annotation.OnScroll;
 import com.cherry.afflux.annotation.OnTextChanged;
 import com.cherry.afflux.annotation.OnTouch;
 import com.cherry.afflux.api.Afflux;
@@ -98,6 +105,21 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @OnDrag(R.id.text_1)
+    boolean onDrag() {
+        return false;
+    }
+
+    @OnScroll(R.id.list_view)
+    void onScroll() {
+
+    }
+
+    @OnScroll(value = R.id.list_view, callback = OnScroll.Callback.ON_SCROLL_STATE_CHANGED)
+    void method() {
+
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -105,12 +127,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class Holder {
-        @BindView(R.id.text)
+        @BindView(R.id.text_0)
         TextView textView;
 
         Holder(View contentView) {
             Afflux.bind(this, contentView);
             Log.i("Test", "textView " + textView);
+        }
+
+        @OnClick(R.id.text_0)
+        void onTextChanged(){
+
         }
     }
 }
