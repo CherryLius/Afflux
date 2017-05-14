@@ -2,4 +2,16 @@
     <string name="app_name">Afflux</string>
     <bool name="bool_success">false</bool>
     <integer name="index">1111</integer>
+    <string-array name="list">
+        <item>abc</item>
+        <item>bcd</item>
+        <item>xyz</item>
+    </string-array>
+    <integer-array name="numbers">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </integer-array>
+    <dimen name="top_padding">12dp</dimen>
 </resources>

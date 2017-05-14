@@ -1,7 +1,10 @@
 package com.cherry.afflux.compiler;
 
+import com.cherry.afflux.annotation.BindArray;
+import com.cherry.afflux.annotation.BindBitmap;
 import com.cherry.afflux.annotation.BindBoolean;
 import com.cherry.afflux.annotation.BindColor;
+import com.cherry.afflux.annotation.BindDimen;
 import com.cherry.afflux.annotation.BindDrawable;
 import com.cherry.afflux.annotation.BindFloat;
 import com.cherry.afflux.annotation.BindInt;
@@ -84,8 +87,11 @@ public class AffluxProcessor extends AbstractProcessor {
     };
 
     private static final Class<? extends Annotation>[] RESOURCE_ANNOTATIONS = new Class[]{
+            BindArray.class,
+            BindBitmap.class,
             BindBoolean.class,
             BindColor.class,
+            BindDimen.class,
             BindDrawable.class,
             BindFloat.class,
             BindInt.class,
@@ -93,8 +99,11 @@ public class AffluxProcessor extends AbstractProcessor {
     };
 
     private static final String[] RESOURCE_TYPE = new String[]{
+            BindingResourceField.ResourceType.GET_ARRAY,
+            BindingResourceField.ResourceType.GET_BITMAP,
             BindingResourceField.ResourceType.GET_BOOLEAN,
             BindingResourceField.ResourceType.GET_COLOR,
+            BindingResourceField.ResourceType.GET_DIMEN,
             BindingResourceField.ResourceType.GET_DRAWABLE,
             BindingResourceField.ResourceType.GET_FLOAT,
             BindingResourceField.ResourceType.GET_INT,

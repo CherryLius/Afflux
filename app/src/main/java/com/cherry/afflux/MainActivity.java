@@ -1,5 +1,6 @@
 package com.cherry.afflux;
 
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -18,8 +19,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cherry.afflux.annotation.BindArray;
+import com.cherry.afflux.annotation.BindBitmap;
 import com.cherry.afflux.annotation.BindBoolean;
 import com.cherry.afflux.annotation.BindColor;
+import com.cherry.afflux.annotation.BindDimen;
 import com.cherry.afflux.annotation.BindDrawable;
 import com.cherry.afflux.annotation.BindInt;
 import com.cherry.afflux.annotation.BindString;
@@ -54,6 +58,18 @@ public class MainActivity extends AppCompatActivity {
     boolean flag;
     @BindInt(R.integer.index)
     int index;
+    @BindArray(R.array.list)
+    String[] array;
+    @BindArray(R.array.numbers)
+    int[] numbers;
+    @BindArray(R.array.list)
+    CharSequence[] charSequences;
+    @BindBitmap(R.mipmap.ic_launcher)
+    Bitmap bitmap;
+    @BindDimen(R.dimen.top_padding)
+    int topPaddingInt;
+    @BindDimen(R.dimen.top_padding)
+    float topPaddingFloat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @OnClick(R.id.text_0)
-        void onTextChanged(){
+        void onTextChanged() {
 
         }
     }
