@@ -3,7 +3,6 @@ package com.cherry.afflux.compiler.model;
 import com.cherry.afflux.annotation.internal.ListenerClass;
 import com.cherry.afflux.compiler.common.Method;
 import com.cherry.afflux.compiler.common.Type;
-import com.cherry.afflux.compiler.log.Logger;
 import com.cherry.afflux.compiler.util.Utils;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -12,7 +11,6 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,7 +204,7 @@ public class BindingClass extends AnnotatedClass {
 
                 if (requireCast) args.add(keyType);
                 args.add(fieldName);
-                args.add(requireRemover ? listener.setter() : listener.setter());
+                args.add(requireRemover ? listener.remover() : listener.setter());
                 if (requireRemover) args.add(listenerField);
 
                 if (statementBuilder.length() > 0 && args.size() > 0) {
