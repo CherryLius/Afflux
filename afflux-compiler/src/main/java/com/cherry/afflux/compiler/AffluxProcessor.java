@@ -20,6 +20,7 @@ import com.cherry.afflux.annotation.OnItemLongClick;
 import com.cherry.afflux.annotation.OnItemSelected;
 import com.cherry.afflux.annotation.OnLongClick;
 import com.cherry.afflux.annotation.OnPageChange;
+import com.cherry.afflux.annotation.OnRadioGroupCheckedChanged;
 import com.cherry.afflux.annotation.OnScroll;
 import com.cherry.afflux.annotation.OnSeekBarChange;
 import com.cherry.afflux.annotation.OnTextChanged;
@@ -83,8 +84,9 @@ public class AffluxProcessor extends AbstractProcessor {
             OnItemSelected.class,
             OnLongClick.class,
             OnPageChange.class,
-            OnSeekBarChange.class,
+            OnRadioGroupCheckedChanged.class,
             OnScroll.class,
+            OnSeekBarChange.class,
             OnTextChanged.class,
             OnTouch.class,
     };
