@@ -14,13 +14,13 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.SOURCE)
 @ListenerClass(
-        targetType = "android.widget.ViewGroup",
+        targetType = "android.widget.RadioGroup",
         setter = "setOnCheckedChangeListener",
-        type = "android.widget.ViewGroup.OnCheckedChangeListener",
+        type = "android.widget.RadioGroup.OnCheckedChangeListener",
         method = @ListenerMethod(
                 name = "onCheckedChanged",
                 parameters = {
-                        "android.widget.ViewGroup",
+                        "android.widget.RadioGroup",
                         "int"
                 }
         )
