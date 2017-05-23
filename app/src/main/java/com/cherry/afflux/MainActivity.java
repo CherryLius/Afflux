@@ -3,19 +3,14 @@ package com.cherry.afflux;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,6 +33,7 @@ import com.cherry.afflux.annotation.OnItemLongClick;
 import com.cherry.afflux.annotation.OnItemSelected;
 import com.cherry.afflux.annotation.OnLongClick;
 import com.cherry.afflux.annotation.OnScroll;
+import com.cherry.afflux.annotation.OnSeekBarChange;
 import com.cherry.afflux.annotation.OnTextChanged;
 import com.cherry.afflux.annotation.OnTouch;
 import com.cherry.afflux.api.Afflux;
@@ -143,6 +139,11 @@ public class MainActivity extends AppCompatActivity {
 
     @OnScroll(R.id.list_view)
     void onScroll() {
+
+    }
+
+    @OnSeekBarChange(R.id.seek_bar)
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
     }
 

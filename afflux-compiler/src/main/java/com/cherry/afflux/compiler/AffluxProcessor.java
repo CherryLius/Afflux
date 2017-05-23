@@ -21,6 +21,7 @@ import com.cherry.afflux.annotation.OnItemSelected;
 import com.cherry.afflux.annotation.OnLongClick;
 import com.cherry.afflux.annotation.OnPageChange;
 import com.cherry.afflux.annotation.OnScroll;
+import com.cherry.afflux.annotation.OnSeekBarChange;
 import com.cherry.afflux.annotation.OnTextChanged;
 import com.cherry.afflux.annotation.OnTouch;
 import com.cherry.afflux.compiler.log.Logger;
@@ -82,6 +83,7 @@ public class AffluxProcessor extends AbstractProcessor {
             OnItemSelected.class,
             OnLongClick.class,
             OnPageChange.class,
+            OnSeekBarChange.class,
             OnScroll.class,
             OnTextChanged.class,
             OnTouch.class,
@@ -129,7 +131,7 @@ public class AffluxProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> supportedTypes = new HashSet<>();
-        for (Class<? extends Annotation> annotation:getSupportedAnnotations()) {
+        for (Class<? extends Annotation> annotation : getSupportedAnnotations()) {
             supportedTypes.add(annotation.getCanonicalName());
         }
         return supportedTypes;
