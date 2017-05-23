@@ -235,15 +235,10 @@ public class BindingClass extends AnnotatedClass {
 
     private void bindFieldMethod() {
         for (int viewId : mListenerMethodMap.keySet()) {
-            if (mBindingFieldLists.size() == 0) {
-                String fieldName = String.format("view%d", viewId);
-                putBindingFieldName(viewId, fieldName);
-            } else {
-                if (getBindingViewFiled(viewId) != null)
-                    continue;
-                String fieldName = String.format("view%d", viewId);
-                putBindingFieldName(viewId, fieldName);
-            }
+            if (getBindingViewFiled(viewId) != null)
+                continue;
+            String fieldName = String.format("view%d", viewId);
+            putBindingFieldName(viewId, fieldName);
         }
     }
 
