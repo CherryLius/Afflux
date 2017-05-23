@@ -2,6 +2,7 @@ package com.cherry.afflux.compiler.model;
 
 import com.cherry.afflux.annotation.internal.ListenerClass;
 import com.cherry.afflux.annotation.internal.ListenerMethod;
+import com.cherry.afflux.compiler.util.Utils;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
@@ -15,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.lang.model.element.Modifier;
-
-import static com.cherry.afflux.compiler.common.Type.bestGuess;
 
 /**
  * Created by Administrator on 2017/5/12.
@@ -60,11 +59,11 @@ public class MethodBinding {
             MethodSpec.Builder method = MethodSpec.methodBuilder(listenerMethod.name())
                     .addAnnotation(Override.class)
                     .addModifiers(Modifier.PUBLIC)
-                    .returns(bestGuess(listenerMethod.returnType()));
+                    .returns(Utils.bestGuess(listenerMethod.returnType()));
             //method params
             String[] params = listenerMethod.parameters();
             for (int i = 0; i < params.length; i++) {
-                method.addParameter(bestGuess(params[i]), ("arg" + i));
+                method.addParameter(Utils.bestGuess(params[i]), ("arg" + i));
             }
             method.addCode(generateStateCode(listenerMethod, methods));
             listener.addMethod(method.build());

@@ -81,7 +81,7 @@ public class BindingClass extends AnnotatedClass {
                 .addParameter(Type.VIEW, "source")
                 .addStatement("this.target = target");
         //init resource
-        for (BindingResourceField field: mBindingResourceFieldLists) {
+        for (BindingResourceField field : mBindingResourceFieldLists) {
             constructor.addCode(field.generateCode());
         }
 
@@ -110,12 +110,12 @@ public class BindingClass extends AnnotatedClass {
 
                 int viewId = binding.getViewId();
                 TypeSpec listener = binding.generateListener(entry.getKey(), entry.getValue());
-                TypeName keyType = Type.bestGuess(entry.getKey().targetType());
+                TypeName keyType = Utils.bestGuess(entry.getKey().targetType());
                 boolean requireRemover = !"".equals(entry.getKey().remover());
                 BindingViewField field = getBindingViewFiled(viewId);
 
                 //remover type
-                TypeName listenerType = Type.bestGuess(entry.getKey().type());
+                TypeName listenerType = Utils.bestGuess(entry.getKey().type());
                 String listenerField = String.format("view%d%s", viewId, ((ClassName) listenerType).simpleName());
 
                 String fieldName;
@@ -158,7 +158,7 @@ public class BindingClass extends AnnotatedClass {
             for (ListenerClass listenerClass : binding.getMethodMap().keySet()) {
                 boolean requireRemover = !"".equals(listenerClass.remover());
                 if (requireRemover) {
-                    TypeName typeName = Type.bestGuess(listenerClass.type());
+                    TypeName typeName = Utils.bestGuess(listenerClass.type());
                     String fieldName = String.format("view%d%s", id, ((ClassName) typeName).simpleName());
                     typeBuilder.addField(typeName, fieldName, Modifier.PRIVATE);
                 }
@@ -178,11 +178,11 @@ public class BindingClass extends AnnotatedClass {
         for (MethodBinding binding : mListenerMethodMap.values()) {
             int viewId = binding.getViewId();
             for (ListenerClass listener : binding.getMethodMap().keySet()) {
-                TypeName keyType = Type.bestGuess(listener.targetType());
+                TypeName keyType = Utils.bestGuess(listener.targetType());
                 BindingViewField field = getBindingViewFiled(viewId);
 
                 boolean requireRemover = !"".equals(listener.remover());
-                TypeName typeName = Type.bestGuess(listener.type());
+                TypeName typeName = Utils.bestGuess(listener.type());
                 String listenerField = String.format("view%d%s", viewId, ((ClassName) typeName).simpleName());
 
                 statementBuilder.delete(0, statementBuilder.length());
@@ -222,7 +222,7 @@ public class BindingClass extends AnnotatedClass {
         }
 
         //unbind resource
-        for (BindingResourceField field: mBindingResourceFieldLists) {
+        for (BindingResourceField field : mBindingResourceFieldLists) {
             method.addCode(field.generateUnbindCode());
         }
 
@@ -234,6 +234,13 @@ public class BindingClass extends AnnotatedClass {
     }
 
     private void bindFieldMethod() {
+        if (mBindingFieldLists.size() == 0) {
+            for (int viewId : mListenerMethodMap.keySet()) {
+                String fieldName = String.format("view%d", viewId);
+                putBindingFieldName(viewId, fieldName);
+            }
+            return;
+        }
         for (BindingViewField field : mBindingFieldLists) {
             int id = field.getViewId();
             for (int viewId : mListenerMethodMap.keySet()) {

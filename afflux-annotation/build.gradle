@@ -6,3 +6,16 @@ dependencies {
 
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
+
+task clearJar(type: Delete) {
+    delete 'build/libs/afflux-api.jar'
+}
+
+task makeJar(type: Copy) {
+    from('build/intermediates/bundles/release/')
+    into('build/libs/')
+    include('classes.jar')
+    rename ('classes.jar', 'afflux-api.jar')
+}
+
+makeJar.dependsOn(clearJar, build)

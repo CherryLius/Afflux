@@ -8,9 +8,9 @@ import com.google.auto.service.AutoService;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -49,9 +49,10 @@ public class ParceableProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        Set<String> supportedTypes = getSupportedAnnotations().stream()
-                .map(Class::getCanonicalName)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> supportedTypes = new HashSet<>();
+        for (Class<? extends Annotation> annotation : getSupportedAnnotations()) {
+            supportedTypes.add(annotation.getCanonicalName());
+        }
         return supportedTypes;
     }
 

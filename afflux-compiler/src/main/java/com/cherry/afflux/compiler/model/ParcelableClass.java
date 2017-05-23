@@ -48,31 +48,31 @@ public class ParcelableClass extends AnnotatedClass {
 
         //add original field
         //java 8
-        getAllFieldElements().stream().forEach(variableElement -> {
-            TypeName fieldType = TypeName.get(variableElement.asType());
-            typeSpecBuilder.addField(fieldType,
-                    variableElement.getSimpleName().toString(),
-                    variableElement.getModifiers().toArray(new Modifier[]{}));
-
-        });
-//        List<VariableElement> fieldElementList = getAllFieldElements();
-//        for (int i = 0; i < fieldElementList.size(); i++) {
-//            VariableElement field = fieldElementList.get(i);
-//            TypeName fieldType = TypeName.get(field.asType());
-//            typeSpecBuilder.addField(fieldType, field.getSimpleName().toString(), field.getModifiers().toArray(new Modifier[]{}));
+//        getAllFieldElements().stream().forEach(variableElement -> {
+//            TypeName fieldType = TypeName.get(variableElement.asType());
+//            typeSpecBuilder.addField(fieldType,
+//                    variableElement.getSimpleName().toString(),
+//                    variableElement.getModifiers().toArray(new Modifier[]{}));
+//
+//        });
+        List<VariableElement> fieldElementList = getAllFieldElements();
+        for (int i = 0; i < fieldElementList.size(); i++) {
+            VariableElement field = fieldElementList.get(i);
+            TypeName fieldType = TypeName.get(field.asType());
+            typeSpecBuilder.addField(fieldType, field.getSimpleName().toString(), field.getModifiers().toArray(new Modifier[]{}));
+        }
+//        //add original method
+//        List<ExecutableElement> methodElementList = getAllMethodElements();
+//        for (int i = 0; i < methodElementList.size(); i++) {
+//            ExecutableElement method = methodElementList.get(i);
+//            //typeSpecBuilder.addMethod(executableToMethod(method));
 //        }
-        //add original method
-        List<ExecutableElement> methodElementList = getAllMethodElements();
-        for (int i = 0; i < methodElementList.size(); i++) {
-            ExecutableElement method = methodElementList.get(i);
-            //typeSpecBuilder.addMethod(executableToMethod(method));
-        }
-
-        //add original constructor
-        List<ExecutableElement> constructorElementList = getAllConstructorElements();
-        for (int i = 0; i < constructorElementList.size(); i++) {
-            ExecutableElement constructor = constructorElementList.get(i);
-        }
+//
+//        //add original constructor
+//        List<ExecutableElement> constructorElementList = getAllConstructorElements();
+//        for (int i = 0; i < constructorElementList.size(); i++) {
+//            ExecutableElement constructor = constructorElementList.get(i);
+//        }
 
 
         TypeSpec typeSpec = typeSpecBuilder.build();

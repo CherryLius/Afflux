@@ -33,6 +33,7 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -127,9 +128,10 @@ public class AffluxProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        Set<String> supportedTypes = getSupportedAnnotations().stream()
-                .map(Class::getCanonicalName)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> supportedTypes = new HashSet<>();
+        for (Class<? extends Annotation> annotation:getSupportedAnnotations()) {
+            supportedTypes.add(annotation.getCanonicalName());
+        }
         return supportedTypes;
     }
 
