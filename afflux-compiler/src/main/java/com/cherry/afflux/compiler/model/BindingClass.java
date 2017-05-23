@@ -234,20 +234,15 @@ public class BindingClass extends AnnotatedClass {
     }
 
     private void bindFieldMethod() {
-        if (mBindingFieldLists.size() == 0) {
-            for (int viewId : mListenerMethodMap.keySet()) {
+        for (int viewId : mListenerMethodMap.keySet()) {
+            if (mBindingFieldLists.size() == 0) {
                 String fieldName = String.format("view%d", viewId);
                 putBindingFieldName(viewId, fieldName);
-            }
-            return;
-        }
-        for (BindingViewField field : mBindingFieldLists) {
-            int id = field.getViewId();
-            for (int viewId : mListenerMethodMap.keySet()) {
-                if (id != viewId) {
-                    String fieldName = String.format("view%d", viewId);
-                    putBindingFieldName(viewId, fieldName);
-                }
+            } else {
+                if (getBindingViewFiled(viewId) != null)
+                    continue;
+                String fieldName = String.format("view%d", viewId);
+                putBindingFieldName(viewId, fieldName);
             }
         }
     }
