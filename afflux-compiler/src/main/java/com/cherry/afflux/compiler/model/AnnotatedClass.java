@@ -82,6 +82,10 @@ public abstract class AnnotatedClass {
         }
     }
 
+    public TypeElement getClassElement() {
+        return mClassElement;
+    }
+
     public List<VariableElement> getAllFieldElements() {
         return mFieldElementList;
     }

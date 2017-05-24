@@ -25,6 +25,7 @@ import javax.lang.model.util.Elements;
 
 public class BindingClass extends AnnotatedClass {
 
+    private BindingClass mParentBinding;
     private List<BindingViewField> mBindingFieldLists;
     private List<BindingResourceField> mBindingResourceFieldLists;
 
@@ -58,12 +59,26 @@ public class BindingClass extends AnnotatedClass {
         }
     }
 
+    public void setParent(BindingClass bindingClass) {
+        mParentBinding = bindingClass;
+    }
+
+    public ClassName getBindingTypeName() {
+        return ClassName.get(getPackageName(), getClassName() + "_Binder");
+    }
+
     @Override
     public JavaFile generateFile() {
         TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(getClassName() + "_Binder")
                 .addModifiers(Modifier.PUBLIC)
-                .addSuperinterface(Type.UNBINDER)
                 .addField(getTypeName(), "target");
+
+        if (mParentBinding != null) {
+            typeBuilder.superclass(mParentBinding.getBindingTypeName());
+        } else {
+            typeBuilder.addSuperinterface(Type.UNBINDER);
+        }
+
         //field id and listener id compare
         bindFieldMethod();
         // add field in bindingView
@@ -78,8 +93,12 @@ public class BindingClass extends AnnotatedClass {
         MethodSpec.Builder constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(getTypeName(), "target", Modifier.FINAL)
-                .addParameter(Type.VIEW, "source")
-                .addStatement("this.target = target");
+                .addParameter(Type.VIEW, "source");
+        //parent binding
+        if (mParentBinding != null) {
+            constructor.addStatement("super(target, source)");
+        }
+        constructor.addStatement("this.target = target");
         //init resource
         for (BindingResourceField field : mBindingResourceFieldLists) {
             constructor.addCode(field.generateCode());
@@ -230,6 +249,9 @@ public class BindingClass extends AnnotatedClass {
             method.addStatement("this.$N = null", field.getName());
         }
         method.addStatement("this.target = null");
+        if (mParentBinding != null) {
+            method.addStatement("super.unbind()");
+        }
         return method.build();
     }
 

@@ -40,7 +40,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -50,6 +49,9 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
 /**
@@ -184,6 +186,11 @@ public class AffluxProcessor extends AbstractProcessor {
         }
         for (BindingClass binding : bindingClassMap.values()) {
             try {
+                TypeElement parentType = findParentType(binding.getClassElement(), bindingClassMap);
+                if (parentType != null) {
+                    BindingClass parentBinding = bindingClassMap.get(parentType.getQualifiedName().toString());
+                    binding.setParent(parentBinding);
+                }
                 binding.generateFile().writeTo(mFiler);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -201,5 +208,19 @@ public class AffluxProcessor extends AbstractProcessor {
             map.put(className, binding);
         }
         return binding;
+    }
+
+    private TypeElement findParentType(TypeElement typeElement, Map<String, BindingClass> map) {
+        TypeMirror typeMirror;
+        while (true) {
+            typeMirror = typeElement.getSuperclass();
+            Logger.out("super %s, element %s", typeMirror, typeElement);
+            if (typeMirror.getKind() == TypeKind.NONE) {
+                return null;
+            }
+            typeElement = (TypeElement) ((DeclaredType) typeMirror).asElement();
+            if (map.containsKey(typeElement.getQualifiedName().toString()))
+                return typeElement;
+        }
     }
 }

@@ -3,7 +3,6 @@ package com.cherry.afflux;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -39,10 +38,8 @@ import com.cherry.afflux.annotation.OnTouch;
 import com.cherry.afflux.api.Afflux;
 import com.cherry.afflux.api.Unbinder;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
-    @BindView(R.id.text_0)
-    TextView textView;
     @BindView(R.id.list_view)
     View listView;
     Unbinder unbinder;
